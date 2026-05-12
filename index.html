@@ -1743,11 +1743,25 @@
     }
     setSyncStatus('syncing');
     try {
-      const res = await fetch(CONFIG.API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action, ...payload }),
-        redirect: 'follow'
-      });
+      // CORS問題を避けるため、GETリクエストでパラメーター送信
+      const params = new URLSearchParams();
+      params.append('action', action);
+
+      if (payload.data) {
+        params.append('data', JSON.stringify(payload.data));
+      }
+      if (payload.id) {
+        params.append('id', payload.id);
+      }
+      if (payload.field) {
+        params.append('field', payload.field);
+      }
+      if (payload.value !== undefined) {
+        params.append('value', payload.value);
+      }
+
+      const url = CONFIG.API_URL + '?' + params.toString();
+      const res = await fetch(url, { method: 'GET', redirect: 'follow' });
       const json = await res.json();
       if (!json.ok) {
         setSyncStatus('offline');
