@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f5f1e8">
+<title>工事受注</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f5f1e8;
+    --paper-deep: #ebe4d3;
+    --line: #d4cab3;
+    --line-soft: #e8e0cc;
+    --accent: #c8553d;
+    --accent-deep: #9c3d2a;
+    --gold: #b8860b;
+    --green: #5a7a3a;
+    --slate: #3a4a5a;
+    --muted: #8a8170;
+    --white: #ffffff;
+    --shadow-sm: 0 1px 2px rgba(26,26,26,0.06);
+    --shadow-md: 0 2px 8px rgba(26,26,26,0.08);
+    --shadow-lg: 0 8px 32px rgba(26,26,26,0.12);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+
+  body {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    padding-bottom: calc(70px + var(--safe-bottom));
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(200,85,61,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(58,74,90,0.03) 0%, transparent 40%);
+  }
+
+  /* ========== SETUP SCREEN ========== */
+  .setup-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    z-index: 1000;
+    padding: 40px 24px;
+    overflow-y: auto;
+    display: none;
+  }
+  .setup-screen.active { display: block; }
+  .setup-screen .setup-tag {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .setup-screen h1 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .setup-screen .lead {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.7;
+  }
+  .setup-screen label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .setup-screen input {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    margin-bottom: 16px;
+    word-break: break-all;
+  }
+  .setup-screen input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .setup-screen .setup-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .setup-screen .setup-info {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--slate);
+    line-height: 1.7;
+  }
+  .setup-screen .setup-info strong {
+    color: var(--ink);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .setup-screen .setup-info ol {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+
+  /* ========== TOP BAR ========== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245,241,232,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line-soft);
+    padding: calc(12px + var(--safe-top)) 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar-title .accent { color: var(--accent); }
+  .sync-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    transition: all 0.3s ease;
+  }
+  .sync-indicator.syncing {
+    background: var(--gold);
+    animation: pulse 1s ease infinite;
+  }
+  .sync-indicator.offline { background: var(--accent); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .menu-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: transform 0.15s ease;
+  }
+  .menu-btn:active { transform: scale(0.92); }
+
+  /* ========== PAGES ========== */
+  .page {
+    display: none;
+    padding: 20px;
+    animation: fadeSlide 0.3s ease;
+  }
+  .page.active { display: block; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== HOME ========== */
+  .home-hero {
+    text-align: center;
+    padding: 24px 0 32px;
+    position: relative;
+  }
+  .home-hero::before {
+    content: "工 事";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 100px;
+    font-weight: 800;
+    color: var(--ink);
+    opacity: 0.05;
+    letter-spacing: 0.2em;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+  .home-hero-content { position: relative; z-index: 1; }
+  .home-tag {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .home-greeting {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .home-date {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  /* ========== STATS ========== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .stat-card:active { transform: scale(0.97); }
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+  }
+  .stat-card.s-total::before { background: var(--ink); }
+  .stat-card.s-progress::before { background: var(--gold); }
+  .stat-card.s-urgent::before { background: var(--accent); }
+  .stat-card.s-complete::before { background: var(--green); }
+  .stat-card .stat-num {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card.s-total .stat-num { color: var(--ink); }
+  .stat-card.s-progress .stat-num { color: var(--gold); }
+  .stat-card.s-urgent .stat-num { color: var(--accent); }
+  .stat-card.s-complete .stat-num { color: var(--green); }
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+  .stat-card .stat-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ========== SHORTCUTS ========== */
+  .section-label {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 24px 0 14px;
+  }
+  .section-label .num {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .section-label h3 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .section-label .en {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+    margin-left: auto;
+    text-transform: uppercase;
+  }
+  .shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .shortcut {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+    border: none;
+    font-family: inherit;
+  }
+  .shortcut:active { transform: scale(0.94); }
+  .shortcut .icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 8px;
+    background: var(--paper-deep);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .shortcut.primary .icon { background: var(--accent); color: var(--white); }
+  .shortcut.success .icon { background: var(--green); color: var(--white); }
+  .shortcut.gold .icon { background: var(--gold); color: var(--white); }
+  .shortcut .label {
+    font-size: 10px;
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+  }
+
+  /* ========== FLOW LIST ========== */
+  .flow-list {
+    background: var(--white);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .flow-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .flow-item:last-child { border-bottom: none; }
+  .flow-item:active { background: var(--paper-deep); }
+  .flow-item .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--paper-deep);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .flow-item.urgent .step-circle { background: var(--accent); color: var(--white); }
+  .flow-item.goal .step-circle { background: var(--green); color: var(--white); }
+  .flow-item .step-info { flex: 1; min-width: 0; }
+  .flow-item .step-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .flow-item .step-detail {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .flow-item .step-arrow { color: var(--muted); font-size: 14px; }
+
+  /* ========== LIST PAGE ========== */
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .page-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+  .page-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+  }
+  .filter-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-pills::-webkit-scrollbar { display: none; }
+  .pill {
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    color: var(--muted);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  .pill.active {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
+  .search-bar {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .search-bar input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .search-bar input:focus { outline: none; }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .project-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .project-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    position: relative;
+    border-left: 4px solid var(--line);
+    transition: transform 0.15s ease;
+  }
+  .project-card:active { transform: scale(0.98); }
+  .project-card.r-A { border-left-color: var(--accent); }
+  .project-card.r-B { border-left-color: var(--gold); }
+  .project-card.r-C { border-left-color: var(--green); }
+  .project-card .pc-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .project-card .pc-name {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    flex: 1;
+  }
+  .project-card .pc-rank {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+  .project-card.r-A .pc-rank { background: var(--accent); }
+  .project-card.r-B .pc-rank { background: var(--gold); }
+  .project-card.r-C .pc-rank { background: var(--green); }
+  .project-card .pc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .project-card .pc-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .project-card .pc-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+  .project-card .pc-step {
+    font-size: 11px;
+    color: var(--slate);
+    font-weight: 500;
+  }
+  .project-card .pc-status {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 10px;
+  }
+  .status-未着手 { background: var(--paper-deep); color: var(--muted); }
+  .status-進行中 { background: rgba(184,134,11,0.15); color: var(--gold); }
+  .status-完了 { background: rgba(90,122,58,0.15); color: var(--green); }
+  .status-保留 { background: rgba(200,85,61,0.15); color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .empty-state .text { font-size: 13px; letter-spacing: 0.05em; }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--paper-deep);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ========== FORM ========== */
+  .form-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .form-group label .req {
+    color: var(--accent);
+    margin-left: 3px;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(200,85,61,0.1);
+  }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .rank-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .rank-option {
+    background: var(--white);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .rank-option:active { transform: scale(0.95); }
+  .rank-option.selected.r-A {
+    border-color: var(--accent);
+    background: rgba(200,85,61,0.08);
+  }
+  .rank-option.selected.r-B {
+    border-color: var(--gold);
+    background: rgba(184,134,11,0.08);
+  }
+  .rank-option.selected.r-C {
+    border-color: var(--green);
+    background: rgba(90,122,58,0.08);
+  }
+  .rank-option .ro-letter {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .rank-option.r-A .ro-letter { color: var(--accent); }
+  .rank-option.r-B .ro-letter { color: var(--gold); }
+  .rank-option.r-C .ro-letter { color: var(--green); }
+  .rank-option .ro-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .btn {
+    flex: 1;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--ink); color: var(--white); }
+  .btn-secondary { background: var(--paper-deep); color: var(--ink); }
+  .btn-danger { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+  /* ========== DETAIL ========== */
+  .detail-hero {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--line);
+  }
+  .detail-hero.r-A { border-left-color: var(--accent); }
+  .detail-hero.r-B { border-left-color: var(--gold); }
+  .detail-hero.r-C { border-left-color: var(--green); }
+  .detail-rank-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .detail-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--white);
+  }
+  .detail-hero.r-A .detail-rank { background: var(--accent); }
+  .detail-hero.r-B .detail-rank { background: var(--gold); }
+  .detail-hero.r-C .detail-rank { background: var(--green); }
+  .detail-area {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .detail-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+  .detail-section {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 13px;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .label {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .detail-row .value {
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .progress-section {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--paper-deep);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .step-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .step-pill {
+    background: var(--paper-deep);
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .step-pill.done { background: var(--green); color: var(--white); }
+  .step-pill.current { background: var(--ink); color: var(--white); }
+
+  /* ========== FLOW PAGE ========== */
+  .flow-card-full {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+  .flow-card-full .num-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--paper-deep);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+  }
+  .flow-card-full.urgent .num-badge { background: var(--accent); color: var(--white); }
+  .flow-card-full.goal .num-badge { background: var(--green); color: var(--white); }
+  .flow-card-full h4 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding-right: 50px;
+  }
+  .flow-card-full ul {
+    list-style: none;
+    font-size: 12px;
+    color: var(--slate);
+  }
+  .flow-card-full ul li {
+    padding: 3px 0 3px 12px;
+    position: relative;
+  }
+  .flow-card-full ul li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+  }
+  .flow-connector {
+    text-align: center;
+    color: var(--line);
+    font-size: 12px;
+    margin: 2px 0;
+  }
+
+  .rank-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-left: 4px solid;
+  }
+  .rank-card.r-A { border-left-color: var(--accent); }
+  .rank-card.r-B { border-left-color: var(--gold); }
+  .rank-card.r-C { border-left-color: var(--green); }
+  .rank-card .big-letter {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    width: 50px;
+    text-align: center;
+  }
+  .rank-card.r-A .big-letter { color: var(--accent); }
+  .rank-card.r-B .big-letter { color: var(--gold); }
+  .rank-card.r-C .big-letter { color: var(--green); }
+  .rank-card .rc-info h5 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .rank-card .rc-info p {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .rank-card .rc-info .action {
+    font-weight: 700;
+    color: var(--slate);
+    margin-bottom: 2px;
+  }
+
+  /* ========== BOTTOM NAV ========== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 calc(8px + var(--safe-bottom));
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 4px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+    transition: color 0.15s ease;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn .nav-icon { font-size: 18px; line-height: 1; }
+  .nav-btn .nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* ========== DRAWER ========== */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,26,0.5);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(4px);
+  }
+  .drawer-overlay.open { opacity: 1; visibility: visible; }
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100%;
+    background: var(--paper);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    padding-top: var(--safe-top);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .drawer-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+  }
+  .drawer-close {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .drawer-section { padding: 16px 20px 8px; }
+  .drawer-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.15s ease;
+  }
+  .drawer-item:active { background: var(--paper-deep); }
+  .drawer-item .di-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .drawer-item .di-arrow {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed;
+    bottom: calc(90px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    z-index: 500;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  .toast.error { background: var(--accent); }
+
+  @media (max-width: 360px) {
+    .shortcuts { grid-template-columns: repeat(3, 1fr); }
+    .stat-card .stat-num { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== SETUP SCREEN (初回・URL未設定時) ========== -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-tag">SETUP REQUIRED</div>
+  <h1>初期設定</h1>
+  <p class="lead">Googleスプレッドシートと連携するため、<br>GASウェブアプリのURLを入力してください。</p>
+
+  <label>GAS WEB APP URL</label>
+  <input type="text" id="setup-url" placeholder="https://script.google.com/macros/s/.../exec">
+
+  <div class="setup-actions">
+    <button class="btn btn-secondary" onclick="skipSetup()">後で設定</button>
+    <button class="btn btn-primary" onclick="saveSetup()">接続する</button>
+  </div>
+
+  <div class="setup-info">
+    <strong>📖 URLの取得方法</strong>
+    <ol>
+      <li>Googleスプレッドシートを開く</li>
+      <li>拡張機能 → Apps Script</li>
+      <li>提供されたGASコードを貼り付け</li>
+      <li>デプロイ → 新しいデプロイ → ウェブアプリ</li>
+      <li>アクセス権を「全員」に設定して発行</li>
+      <li>表示されたURLをコピーしてここに貼り付け</li>
+    </ol>
+    <strong style="margin-top:12px;">💡 ヒント</strong>
+    一度設定すれば、次回からは自動で接続されます。
+  </div>
+</div>
+
+<!-- ========== TOP BAR ========== -->
+<div class="topbar">
+  <div class="topbar-title">
+    工事 <span class="accent">受注</span>
+    <div class="sync-indicator" id="sync-indicator" title="接続状態"></div>
+  </div>
+  <button class="menu-btn" onclick="toggleDrawer()" aria-label="メニュー">☰</button>
+</div>
+
+<!-- ========== HOME PAGE ========== -->
+<div class="page active" id="page-home">
+
+  <div class="home-hero">
+    <div class="home-hero-content">
+      <div class="home-tag">CONSTRUCTION DASHBOARD</div>
+      <div class="home-greeting" id="greeting">こんにちは</div>
+      <div class="home-date" id="today-date"></div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card s-total" onclick="goTo('list', 'all')">
+      <div class="stat-num" id="stat-total">—</div>
+      <div class="stat-label">総案件数</div>
+      <div class="stat-sub">登録されている案件</div>
+    </div>
+    <div class="stat-card s-progress" onclick="goTo('list', '進行中')">
+      <div class="stat-num" id="stat-progress">—</div>
+      <div class="stat-label">進行中</div>
+      <div class="stat-sub">対応中の案件</div>
+    </div>
+    <div class="stat-card s-urgent" onclick="goTo('list', 'rankA')">
+      <div class="stat-num" id="stat-urgent">—</div>
+      <div class="stat-label">ランクA</div>
+      <div class="stat-sub">最優先案件</div>
+    </div>
+    <div class="stat-card s-complete" onclick="goTo('list', '完了')">
+      <div class="stat-num" id="stat-complete">—</div>
+      <div class="stat-label">受注完了</div>
+      <div class="stat-sub">受注済み案件</div>
+    </div>
+  </div>
+
+  <div class="section-label">
+    <span class="num">壱</span>
+    <h3>クイックメニュー</h3>
+    <span class="en">Shortcuts</span>
+  </div>
+
+  <div class="shortcuts">
+    <button class="shortcut primary" onclick="goTo('form')">
+      <div class="icon">+</div>
+      <div class="label">新規登録</div>
+    </button>
+    <button class="shortcut" onclick="goTo('list')">
+      <div class="icon">📋</div>
+      <div class="label">案件一覧</div>
+    </button>
+    <button class="shortcut gold" onclick="goTo('list', '進行中')">
+      <div class="icon">⏱</div>
+      <div class="label">進行中</div>
+    </button>
+    <button class="shortcut success" onclick="goTo('list', '完了')">
+      <div class="icon">✓</div>
+      <div class="label">完了</div>
+    </button>
+    <button class="shortcut" onclick="goTo('flow')">
+      <div class="icon">📖</div>
+      <div class="label">フロー</div>
+    </button>
+    <button class="shortcut" onclick="goTo('list', 'rankA')">
+      <div class="icon">🔥</div>
+      <div class="label">ランクA</div>
+    </button>
+    <button class="shortcut" onclick="refreshData()">
+      <div class="icon">↻</div>
+      <div class="label">更新</div>
+    </button>
+    <button class="shortcut" onclick="openSheet()">
+      <div class="icon">📊</div>
+      <div class="label">シート</div>
+    </button>
+  </div>
+
+  <div class="section-label">
+    <span class="num">弐</span>
+    <h3>業務フロー</h3>
+    <span class="en">Workflow</span>
+  </div>
+
+  <div class="flow-list">
+    <div class="flow-item" onclick="goTo('flow')">
+      <div class="step-circle">1</div>
+      <div class="step-info">
+        <div class="step-title">物件情報</div>
+        <div class="step-detail">工程・エリア・ランクCBA</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="flow-item" onclick="goTo('flow')">
+      <div class="step-circle">2</div>
+      <div class="step-info">
+        <div class="step-title">リスト作成</div>
+        <div class="step-detail">優先度の設定 / 担当割り振り</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="flow-item urgent" onclick="goTo('flow')">
+      <div class="step-circle">4</div>
+      <div class="step-info">
+        <div class="step-title">見積準備 ※納期</div>
+        <div class="step-detail">単価入れ / 材料計算 / 施工計画</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="flow-item goal" onclick="goTo('flow')">
+      <div class="step-circle">7</div>
+      <div class="step-info">
+        <div class="step-title">受注 ★ GOAL</div>
+        <div class="step-detail">契約締結 / 条件確認</div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== LIST PAGE ========== -->
+<div class="page" id="page-list">
+
+  <div class="page-header">
+    <div>
+      <div class="page-sub">PROJECT LIST</div>
+      <div class="page-title">案件一覧</div>
+    </div>
+    <button class="menu-btn" onclick="goTo('form')" style="background:var(--accent);">+</button>
+  </div>
+
+  <div class="search-bar">
+    <span style="color:var(--muted);">🔍</span>
+    <input type="text" id="search-input" placeholder="案件名・エリアで検索..." oninput="renderList()">
+  </div>
+
+  <div class="filter-pills">
+    <button class="pill active" data-filter="all" onclick="setFilter('all')">全て</button>
+    <button class="pill" data-filter="未着手" onclick="setFilter('未着手')">未着手</button>
+    <button class="pill" data-filter="進行中" onclick="setFilter('進行中')">進行中</button>
+    <button class="pill" data-filter="完了" onclick="setFilter('完了')">完了</button>
+    <button class="pill" data-filter="保留" onclick="setFilter('保留')">保留</button>
+    <button class="pill" data-filter="rankA" onclick="setFilter('rankA')">ランクA</button>
+  </div>
+
+  <div class="project-cards" id="project-cards"></div>
+
+</div>
+
+<!-- ========== FORM PAGE ========== -->
+<div class="page" id="page-form">
+
+  <div class="page-header">
+    <div>
+      <div class="page-sub" id="form-sub">NEW PROJECT</div>
+      <div class="page-title" id="form-title">新規案件登録</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-group">
+      <label>案件名 <span class="req">*</span></label>
+      <input type="text" class="form-input" id="f-name" placeholder="○○邸 リフォーム工事">
+    </div>
+    <div class="form-group">
+      <label>エリア</label>
+      <input type="text" class="form-input" id="f-area" placeholder="横浜エリア">
+    </div>
+    <div class="form-group">
+      <label>ランク</label>
+      <div class="rank-selector" id="rank-selector">
+        <button class="rank-option r-A" data-rank="A" onclick="selectRank('A')">
+          <div class="ro-letter">A</div>
+          <div class="ro-label">最優先</div>
+        </button>
+        <button class="rank-option r-B selected" data-rank="B" onclick="selectRank('B')">
+          <div class="ro-letter">B</div>
+          <div class="ro-label">見積</div>
+        </button>
+        <button class="rank-option r-C" data-rank="C" onclick="selectRank('C')">
+          <div class="ro-letter">C</div>
+          <div class="ro-label">長期</div>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>現在の工程</label>
+      <select class="form-select" id="f-step">
+        <option value="1. 物件情報">1. 物件情報</option>
+        <option value="2. リスト作成">2. リスト作成</option>
+        <option value="3. 図面・数量">3. 図面・数量</option>
+        <option value="4. 見積準備">4. 見積準備</option>
+        <option value="5. 営業活動">5. 営業活動</option>
+        <option value="6. フォロー">6. フォロー</option>
+        <option value="7. 受注">7. 受注</option>
+        <option value="8. 工事準備">8. 工事準備</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>登録日</label>
+        <input type="date" class="form-input" id="f-date-start">
+      </div>
+      <div class="form-group">
+        <label>納期</label>
+        <input type="date" class="form-input" id="f-date-end">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>担当者</label>
+      <input type="text" class="form-input" id="f-owner" placeholder="山田">
+    </div>
+    <div class="form-group">
+      <label>ステータス</label>
+      <select class="form-select" id="f-status">
+        <option value="未着手">未着手</option>
+        <option value="進行中">進行中</option>
+        <option value="完了">完了</option>
+        <option value="保留">保留</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>備考</label>
+      <textarea class="form-textarea" id="f-memo" placeholder="メモ・特記事項"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="goTo('list')">キャンセル</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveProject()">登録する</button>
+    </div>
+    <div class="form-actions" id="delete-action" style="display:none;">
+      <button class="btn btn-danger" onclick="deleteCurrentProject()">この案件を削除</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== DETAIL PAGE ========== -->
+<div class="page" id="page-detail">
+
+  <div class="page-header">
+    <div>
+      <div class="page-sub">PROJECT DETAIL</div>
+      <div class="page-title" style="font-size:18px;">案件詳細</div>
+    </div>
+    <button class="menu-btn" onclick="editCurrentProject()" style="background:var(--slate);">✎</button>
+  </div>
+
+  <div class="detail-hero" id="detail-hero">
+    <div class="detail-rank-row">
+      <div class="detail-rank" id="detail-rank">B</div>
+      <div class="detail-area" id="detail-area">エリア</div>
+    </div>
+    <div class="detail-name" id="detail-name">案件名</div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-header">
+      <span style="color:var(--muted);letter-spacing:0.1em;font-size:10px;">PROGRESS</span>
+      <span id="progress-text" style="font-weight:700;">0 / 8</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%;"></div>
+    </div>
+    <div class="step-pills" id="step-pills"></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-row">
+      <span class="label">ステータス</span>
+      <span class="value" id="detail-status">—</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">担当者</span>
+      <span class="value" id="detail-owner">—</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">登録日</span>
+      <span class="value" id="detail-date-start">—</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">納期</span>
+      <span class="value" id="detail-date-end">—</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">最終更新</span>
+      <span class="value" id="detail-updated" style="font-size:11px;color:var(--muted);">—</span>
+    </div>
+  </div>
+
+  <div class="detail-section" id="detail-memo-section">
+    <div style="font-size:10px;color:var(--muted);letter-spacing:0.2em;margin-bottom:8px;">MEMO</div>
+    <div id="detail-memo" style="font-size:13px;line-height:1.7;color:var(--slate);">—</div>
+  </div>
+
+  <div class="form-actions" style="margin-top:16px;">
+    <button class="btn btn-secondary" onclick="goTo('list')">一覧に戻る</button>
+    <button class="btn btn-primary" onclick="editCurrentProject()">編集</button>
+  </div>
+
+</div>
+
+<!-- ========== FLOW PAGE ========== -->
+<div class="page" id="page-flow">
+
+  <div class="page-header">
+    <div>
+      <div class="page-sub">WORKFLOW MANUAL</div>
+      <div class="page-title">業務フロー</div>
+    </div>
+  </div>
+
+  <div class="section-label">
+    <span class="num">壱</span>
+    <h3>8ステップ</h3>
+    <span class="en">Process</span>
+  </div>
+
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 01</div>
+    <h4>物件情報</h4>
+    <ul><li>工程の確認</li><li>エリアの分類</li><li>ランクC・B・A</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 02</div>
+    <h4>リスト作成</h4>
+    <ul><li>優先度の設定</li><li>物件情報を整理</li><li>担当割り振り</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 03</div>
+    <h4>図面・数量</h4>
+    <ul><li>設計図の準備</li><li>数量表の作成</li><li>内訳の確認</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full urgent">
+    <div class="num-badge">納期</div>
+    <h4>STEP 04・見積準備</h4>
+    <ul><li>単価入れ</li><li>材料計算</li><li>施工計画</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 05</div>
+    <h4>営業活動</h4>
+    <ul><li>ランク別TEL</li><li>見積提出</li><li>施工計画説明</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 06</div>
+    <h4>フォロー</h4>
+    <ul><li>リスト管理</li><li>進捗確認</li><li>追客活動</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full goal">
+    <div class="num-badge">GOAL</div>
+    <h4>STEP 07・受注</h4>
+    <ul><li>契約締結</li><li>条件確認</li><li>顧客対応</li></ul>
+  </div>
+  <div class="flow-connector">▼</div>
+  <div class="flow-card-full">
+    <div class="num-badge">STEP 08</div>
+    <h4>工事準備</h4>
+    <ul><li>材料発注</li><li>職人手配</li><li>着工準備</li></ul>
+  </div>
+
+  <div class="section-label" style="margin-top:32px;">
+    <span class="num">弐</span>
+    <h3>ランク別アクション</h3>
+    <span class="en">By Rank</span>
+  </div>
+
+  <div class="rank-card r-A">
+    <div class="big-letter">A</div>
+    <div class="rc-info">
+      <h5>最優先案件</h5>
+      <p class="action">TEL対応</p>
+      <p>即座に連絡・優先対応 / 早期受注を目指す</p>
+    </div>
+  </div>
+  <div class="rank-card r-B">
+    <div class="big-letter">B</div>
+    <div class="rc-info">
+      <h5>見積案件</h5>
+      <p class="action">TEL + 見積り</p>
+      <p>詳細見積を提出 / 条件交渉を進める</p>
+    </div>
+  </div>
+  <div class="rank-card r-C">
+    <div class="big-letter">C</div>
+    <div class="rc-info">
+      <h5>長期案件</h5>
+      <p class="action">TEL + 見積 + 施工計画</p>
+      <p>包括的な提案 / 信頼構築を重視</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== BOTTOM NAV ========== -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-page="home" onclick="goTo('home')">
+    <span class="nav-icon">⌂</span>
+    <span class="nav-label">ホーム</span>
+  </button>
+  <button class="nav-btn" data-page="list" onclick="goTo('list')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">一覧</span>
+  </button>
+  <button class="nav-btn" data-page="form" onclick="goTo('form')">
+    <span class="nav-icon">+</span>
+    <span class="nav-label">追加</span>
+  </button>
+  <button class="nav-btn" data-page="flow" onclick="goTo('flow')">
+    <span class="nav-icon">📖</span>
+    <span class="nav-label">フロー</span>
+  </button>
+</div>
+
+<!-- ========== DRAWER ========== -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">メニュー</div>
+    <button class="drawer-close" onclick="toggleDrawer()">×</button>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">画面移動</div>
+    <button class="drawer-item" onclick="goTo('home'); toggleDrawer();">
+      <div class="di-icon">⌂</div><span>ホーム</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="goTo('list'); toggleDrawer();">
+      <div class="di-icon">📋</div><span>案件一覧</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="goTo('form'); toggleDrawer();">
+      <div class="di-icon">+</div><span>新規登録</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="goTo('flow'); toggleDrawer();">
+      <div class="di-icon">📖</div><span>業務フロー</span><span class="di-arrow">›</span>
+    </button>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">絞り込み</div>
+    <button class="drawer-item" onclick="goTo('list','rankA'); toggleDrawer();">
+      <div class="di-icon" style="background:rgba(200,85,61,0.15);color:var(--accent);">A</div>
+      <span>ランクA案件</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="goTo('list','進行中'); toggleDrawer();">
+      <div class="di-icon" style="background:rgba(184,134,11,0.15);color:var(--gold);">⏱</div>
+      <span>進行中の案件</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="goTo('list','完了'); toggleDrawer();">
+      <div class="di-icon" style="background:rgba(90,122,58,0.15);color:var(--green);">✓</div>
+      <span>完了済み</span><span class="di-arrow">›</span>
+    </button>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">データ管理</div>
+    <button class="drawer-item" onclick="refreshData(); toggleDrawer();">
+      <div class="di-icon">↻</div><span>データを更新</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="openSheet(); toggleDrawer();">
+      <div class="di-icon">📊</div><span>スプレッドシートを開く</span><span class="di-arrow">›</span>
+    </button>
+    <button class="drawer-item" onclick="showSetup(); toggleDrawer();">
+      <div class="di-icon">⚙</div><span>接続設定</span><span class="di-arrow">›</span>
+    </button>
+  </div>
+  <div style="padding:20px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:0.2em;">
+    工 事 受 注 v2.0
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ========== 設定 ==========
+  const STORAGE_KEY = 'koujimanualConfig_v2';
+
+  // 設定をlocalStorageから読み込み(失敗時は空)
+  let CONFIG = {
+    API_URL: '',
+    SHEET_URL: ''
+  };
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) CONFIG = JSON.parse(saved);
+  } catch(e) {
+    console.warn('Could not load config');
+  }
+
+  // ========== 状態 ==========
+  let projects = [];
+  let currentFilter = 'all';
+  let currentEditId = null;
+  let currentDetailId = null;
+  let selectedRank = 'B';
+  let isLoading = false;
+
+  const STEPS = [
+    '1. 物件情報', '2. リスト作成', '3. 図面・数量', '4. 見積準備',
+    '5. 営業活動', '6. フォロー', '7. 受注', '8. 工事準備'
+  ];
+
+  // ========== 初期化 ==========
+  function init() {
+    updateDate();
+    updateGreeting();
+
+    if (!CONFIG.API_URL) {
+      showSetup();
+    } else {
+      fetchProjects();
+      // 30秒ごとに自動同期
+      setInterval(() => {
+        if (CONFIG.API_URL && !isLoading) fetchProjects(true);
+      }, 30000);
+    }
+  }
+
+  function updateDate() {
+    const now = new Date();
+    const days = ['日','月','火','水','木','金','土'];
+    document.getElementById('today-date').textContent =
+      `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 (${days[now.getDay()]})`;
+  }
+
+  function updateGreeting() {
+    const hour = new Date().getHours();
+    let greeting = 'こんにちは';
+    if (hour < 5) greeting = 'おつかれさまです';
+    else if (hour < 11) greeting = 'おはようございます';
+    else if (hour < 17) greeting = 'こんにちは';
+    else greeting = 'おつかれさまです';
+    document.getElementById('greeting').textContent = greeting;
+  }
+
+  // ========== セットアップ ==========
+  function showSetup() {
+    document.getElementById('setup-screen').classList.add('active');
+    document.getElementById('setup-url').value = CONFIG.API_URL || '';
+  }
+
+  function saveSetup() {
+    const url = document.getElementById('setup-url').value.trim();
+    if (!url) {
+      showToast('URLを入力してください', true);
+      return;
+    }
+    if (!url.includes('script.google.com')) {
+      showToast('正しいGAS URLを入力してください', true);
+      return;
+    }
+
+    CONFIG.API_URL = url;
+
+    // スプレッドシートのURLも記録(GASのURLから推測)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(CONFIG));
+    } catch(e) {
+      console.warn('Could not save config');
+    }
+
+    document.getElementById('setup-screen').classList.remove('active');
+    showToast('接続中...');
+    fetchProjects();
+  }
+
+  function skipSetup() {
+    document.getElementById('setup-screen').classList.remove('active');
+  }
+
+  function openSheet() {
+    if (CONFIG.SHEET_URL) {
+      window.open(CONFIG.SHEET_URL, '_blank');
+    } else {
+      const url = prompt('スプレッドシートのURLを入力してください\n(共有用に保存されます)');
+      if (url) {
+        CONFIG.SHEET_URL = url.trim();
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(CONFIG));
+        } catch(e) {}
+        window.open(CONFIG.SHEET_URL, '_blank');
+      }
+    }
+  }
+
+  // ========== 同期インジケーター ==========
+  function setSyncStatus(status) {
+    const indicator = document.getElementById('sync-indicator');
+    indicator.classList.remove('syncing', 'offline');
+    if (status === 'syncing') indicator.classList.add('syncing');
+    else if (status === 'offline') indicator.classList.add('offline');
+  }
+
+  // ========== API呼び出し ==========
+  async function fetchProjects(silent = false) {
+    if (!CONFIG.API_URL) {
+      showSetup();
+      return;
+    }
+
+    isLoading = true;
+    setSyncStatus('syncing');
+    if (!silent) renderLoading();
+
+    try {
+      const res = await fetch(CONFIG.API_URL, { method: 'GET' });
+      const json = await res.json();
+
+      if (json.ok) {
+        projects = json.data || [];
+        setSyncStatus('online');
+        render();
+        if (!silent) showToast('データを読み込みました');
+      } else {
+        setSyncStatus('offline');
+        showToast('読み込みエラー: ' + (json.error || '不明'), true);
+      }
+    } catch (err) {
+      setSyncStatus('offline');
+      console.error(err);
+      if (!silent) showToast('接続できません。設定を確認してください', true);
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function apiPost(action, payload) {
+    if (!CONFIG.API_URL) {
+      showSetup();
+      throw new Error('No API URL');
+    }
+    setSyncStatus('syncing');
+    try {
+      const res = await fetch(CONFIG.API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action, ...payload }),
+        redirect: 'follow'
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setSyncStatus('offline');
+        throw new Error(json.error || 'Failed');
+      }
+      setSyncStatus('online');
+      return json;
+    } catch (err) {
+      setSyncStatus('offline');
+      throw err;
+    }
+  }
+
+  async function refreshData() {
+    await fetchProjects();
+  }
+
+  // ========== ナビゲーション ==========
+  function goTo(page, filter) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+    if (navBtn) navBtn.classList.add('active');
+
+    if (page === 'list' && filter) {
+      setFilter(filter);
+    } else if (page === 'list') {
+      renderList();
+    }
+
+    if (page === 'form') resetForm();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleDrawer() {
+    document.getElementById('drawer').classList.toggle('open');
+    document.getElementById('drawer-overlay').classList.toggle('open');
+  }
+
+  // ========== レンダリング ==========
+  function render() {
+    updateStats();
+    renderList();
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = projects.length;
+    document.getElementById('stat-progress').textContent = projects.filter(p => p.status === '進行中').length;
+    document.getElementById('stat-urgent').textContent = projects.filter(p => p.rank === 'A').length;
+    document.getElementById('stat-complete').textContent = projects.filter(p => p.status === '完了').length;
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.filter === filter);
+    });
+    renderList();
+  }
+
+  function renderLoading() {
+    const container = document.getElementById('project-cards');
+    if (container) {
+      container.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <div>読み込み中...</div>
+        </div>`;
+    }
+  }
+
+  function renderList() {
+    const container = document.getElementById('project-cards');
+    if (!container) return;
+
+    const searchInput = document.getElementById('search-input');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    let filtered = projects;
+    if (currentFilter === 'rankA') filtered = filtered.filter(p => p.rank === 'A');
+    else if (currentFilter !== 'all') filtered = filtered.filter(p => p.status === currentFilter);
+
+    if (searchTerm) {
+      filtered = filtered.filter(p =>
+        (p.name || '').toLowerCase().includes(searchTerm) ||
+        (p.area || '').toLowerCase().includes(searchTerm) ||
+        (p.owner || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="emoji">🍵</div>
+          <div class="text">該当する案件がありません</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => `
+      <div class="project-card r-${p.rank}" onclick="showDetail('${p.id}')">
+        <div class="pc-top">
+          <div class="pc-name">${escapeHtml(p.name)}</div>
+          <div class="pc-rank">${p.rank}</div>
+        </div>
+        <div class="pc-meta">
+          <span>📍 ${escapeHtml(p.area || '—')}</span>
+          <span>👤 ${escapeHtml(p.owner || '—')}</span>
+          ${p.dateEnd ? `<span>📅 ${formatDate(p.dateEnd)}</span>` : ''}
+        </div>
+        <div class="pc-bottom">
+          <div class="pc-step">${escapeHtml(p.step)}</div>
+          <div class="pc-status status-${p.status}">${p.status}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ========== 詳細 ==========
+  function showDetail(id) {
+    const p = projects.find(x => String(x.id) === String(id));
+    if (!p) return;
+    currentDetailId = p.id;
+
+    const hero = document.getElementById('detail-hero');
+    hero.className = 'detail-hero r-' + p.rank;
+
+    document.getElementById('detail-rank').textContent = p.rank;
+    document.getElementById('detail-area').textContent = p.area || 'エリア未設定';
+    document.getElementById('detail-name').textContent = p.name;
+    document.getElementById('detail-status').textContent = p.status;
+    document.getElementById('detail-status').className = 'value status-' + p.status;
+    document.getElementById('detail-owner').textContent = p.owner || '—';
+    document.getElementById('detail-date-start').textContent = formatDate(p.dateStart) || '—';
+    document.getElementById('detail-date-end').textContent = formatDate(p.dateEnd) || '—';
+    document.getElementById('detail-updated').textContent = p.updatedAt || '—';
+
+    if (p.memo && p.memo.trim()) {
+      document.getElementById('detail-memo').textContent = p.memo;
+      document.getElementById('detail-memo-section').style.display = 'block';
+    } else {
+      document.getElementById('detail-memo-section').style.display = 'none';
+    }
+
+    const stepIdx = STEPS.indexOf(p.step);
+    const progressPct = ((stepIdx + 1) / STEPS.length) * 100;
+    document.getElementById('progress-fill').style.width = progressPct + '%';
+    document.getElementById('progress-text').textContent = (stepIdx + 1) + ' / ' + STEPS.length;
+
+    const pillsHtml = STEPS.map((s, i) => {
+      let cls = 'step-pill';
+      if (i < stepIdx) cls += ' done';
+      else if (i === stepIdx) cls += ' current';
+      return `<button class="${cls}" onclick="advanceStep('${p.id}', '${s.replace(/'/g, "\\'")}')">${s}</button>`;
+    }).join('');
+    document.getElementById('step-pills').innerHTML = pillsHtml;
+
+    goTo('detail');
+  }
+
+  async function advanceStep(id, newStep) {
+    const p = projects.find(x => String(x.id) === String(id));
+    if (!p) return;
+
+    // 楽観的更新(即UIに反映)
+    const oldStep = p.step;
+    const oldStatus = p.status;
+    p.step = newStep;
+    if (p.status === '未着手') p.status = '進行中';
+    showDetail(id);
+
+    // バックエンドに送信
+    try {
+      await apiPost('updateField', { id: p.id, field: 'step', value: newStep });
+      if (oldStatus === '未着手' && p.status === '進行中') {
+        await apiPost('updateField', { id: p.id, field: 'status', value: '進行中' });
+      }
+      showToast('工程を更新しました');
+      render();
+    } catch (err) {
+      // ロールバック
+      p.step = oldStep;
+      p.status = oldStatus;
+      showDetail(id);
+      showToast('更新に失敗しました', true);
+    }
+  }
+
+  // ========== フォーム ==========
+  function resetForm() {
+    if (currentEditId) return;
+    document.getElementById('form-title').textContent = '新規案件登録';
+    document.getElementById('form-sub').textContent = 'NEW PROJECT';
+    document.getElementById('save-btn').textContent = '登録する';
+    document.getElementById('delete-action').style.display = 'none';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-area').value = '';
+    document.getElementById('f-step').value = '1. 物件情報';
+    document.getElementById('f-date-start').value = new Date().toISOString().split('T')[0];
+    document.getElementById('f-date-end').value = '';
+    document.getElementById('f-owner').value = '';
+    document.getElementById('f-status').value = '未着手';
+    document.getElementById('f-memo').value = '';
+    selectRank('B');
+  }
+
+  function selectRank(r) {
+    selectedRank = r;
+    document.querySelectorAll('.rank-option').forEach(o => {
+      o.classList.toggle('selected', o.dataset.rank === r);
+    });
+  }
+
+  function editCurrentProject() {
+    const p = projects.find(x => String(x.id) === String(currentDetailId));
+    if (!p) return;
+    currentEditId = p.id;
+    document.getElementById('form-title').textContent = '案件を編集';
+    document.getElementById('form-sub').textContent = 'EDIT PROJECT';
+    document.getElementById('save-btn').textContent = '更新する';
+    document.getElementById('delete-action').style.display = 'flex';
+
+    document.getElementById('f-name').value = p.name || '';
+    document.getElementById('f-area').value = p.area || '';
+    document.getElementById('f-step').value = p.step || '1. 物件情報';
+    document.getElementById('f-date-start').value = p.dateStart || '';
+    document.getElementById('f-date-end').value = p.dateEnd || '';
+    document.getElementById('f-owner').value = p.owner || '';
+    document.getElementById('f-status').value = p.status || '未着手';
+    document.getElementById('f-memo').value = p.memo || '';
+    selectRank(p.rank || 'B');
+
+    goTo('form');
+  }
+
+  async function saveProject() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) {
+      showToast('案件名を入力してください', true);
+      return;
+    }
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '保存中...';
+
+    const data = {
+      name: name,
+      area: document.getElementById('f-area').value.trim(),
+      rank: selectedRank,
+      step: document.getElementById('f-step').value,
+      dateStart: document.getElementById('f-date-start').value,
+      dateEnd: document.getElementById('f-date-end').value,
+      owner: document.getElementById('f-owner').value.trim(),
+      status: document.getElementById('f-status').value,
+      memo: document.getElementById('f-memo').value.trim()
+    };
+
+    try {
+      if (currentEditId) {
+        data.id = currentEditId;
+        await apiPost('update', { data });
+        showToast('案件を更新しました');
+        const editedId = currentEditId;
+        currentEditId = null;
+        await fetchProjects(true);
+        showDetail(editedId);
+      } else {
+        await apiPost('create', { data });
+        showToast('新規案件を登録しました');
+        currentEditId = null;
+        await fetchProjects(true);
+        goTo('list');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('保存に失敗しました', true);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = currentEditId ? '更新する' : '登録する';
+    }
+  }
+
+  async function deleteCurrentProject() {
+    if (!currentEditId) return;
+    if (!confirm('この案件を削除しますか?\n(スプレッドシートからも削除されます)')) return;
+
+    try {
+      await apiPost('delete', { id: currentEditId });
+      currentEditId = null;
+      showToast('削除しました');
+      await fetchProjects(true);
+      goTo('list');
+    } catch (err) {
+      showToast('削除に失敗しました', true);
+    }
+  }
+
+  // ========== ヘルパー ==========
+  function escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  }
+
+  function showToast(msg, isError) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ========== 起動 ==========
+  init();
+
+  // ページ復帰時に再同期
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && CONFIG.API_URL && !isLoading) {
+      fetchProjects(true);
+    }
+  });
+</script>
+
+</body>
+</html>
